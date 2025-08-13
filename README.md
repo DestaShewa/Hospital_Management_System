@@ -1,3 +1,7 @@
+Hospital Management System (MERN Stack)
+
+
+
 A comprehensive, production-ready web application to streamline day‑to‑day hospital operations. It provides a seamless digital experience for Patients, Doctors, and Admins—from appointment booking to data visualization.
 
 
@@ -43,32 +47,7 @@ Doctor management: add, edit, list
 🧱 Tech Stack
 
 Frontend: React (Vite), Tailwind CSS, React Router, Recharts, React Hot ToastBackend: Node.js, Express.jsDatabase: MongoDB + MongooseAuth: JSON Web Tokens (JWT) + bcryptjsFile Storage: Cloudinary (via Multer)
-
-📂 Monorepo Structure
-
-root/
-├─ client/               # React (Vite) frontend
-│  ├─ src/
-│  │  ├─ components/
-│  │  ├─ pages/
-│  │  ├─ hooks/
-│  │  ├─ lib/
-│  │  └─ services/      # API clients
-│  └─ index.html
-│
-├─ server/               # Node/Express backend
-│  ├─ src/
-│  │  ├─ models/        # Mongoose schemas
-│  │  ├─ routes/        # Express routers
-│  │  ├─ controllers/
-│  │  ├─ middleware/
-│  │  ├─ utils/
-│  │  └─ app.js
-│  ├─ server.js
-│  └─ .env               # see sample below
-│
-├─ hms-screenshot.png    # GitHub README image (add this)
-└─ README.md
+            # Node/Express backen
 
 ⚙️ Getting Started (Local)
 
