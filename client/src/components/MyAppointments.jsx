@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
+import SkeletonLoader from "./SkeletonLoader"; // 1. Import the SkeletonLoader
 
 const MyAppointments = () => {
   const [appointments, setAppointments] = useState([]);
@@ -11,7 +12,7 @@ const MyAppointments = () => {
 
   useEffect(() => {
     const fetchMyAppointments = async () => {
-      // Create the config with the authorization token
+      // We already set loading to true initially, so we don't need to set it again here.
       const config = {
         headers: {
           Authorization: `Bearer ${userInfo.token}`,
@@ -19,30 +20,49 @@ const MyAppointments = () => {
       };
 
       try {
-        setLoading(true);
-        // Make the protected GET request
         const { data } = await axios.get(
           "http://localhost:5000/api/appointments/myappointments",
           config
         );
         setAppointments(data);
+        // Set loading to false only after the data has been successfully fetched.
         setLoading(false);
       } catch (error) {
         console.error("Failed to fetch appointments", error);
+        // Also set loading to false if there is an error.
         setLoading(false);
       }
     };
 
-    // Only fetch if userInfo is available
     if (userInfo) {
       fetchMyAppointments();
     }
-  }, [userInfo]); // Re-run the effect if userInfo changes
+  }, [userInfo]);
 
+  // 2. This is the key change. We check for the loading state here.
   if (loading) {
-    return <div>Loading your appointments...</div>;
+    // If the data is loading, we return a list of skeleton placeholders.
+    return (
+      <div className="p-4 bg-white rounded-lg shadow-md mt-6">
+        <h3 className="text-xl font-semibold mb-4">
+          <SkeletonLoader className="h-7 w-48" />
+        </h3>
+        <div className="space-y-4">
+          {/* Create a few placeholder cards */}
+          {[1, 2].map((n) => (
+            <div key={n} className="p-4 border rounded-md bg-gray-50">
+              <SkeletonLoader className="h-5 w-3/4 mb-2" />
+              <SkeletonLoader className="h-5 w-1/2 mb-2" />
+              <SkeletonLoader className="h-5 w-1/3 mb-2" />
+              <SkeletonLoader className="h-5 w-1/4" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
+  // 3. This part only renders if loading is false.
   return (
     <div className="p-4 bg-white rounded-lg shadow-md mt-6">
       <h3 className="text-xl font-semibold mb-4">My Appointments</h3>

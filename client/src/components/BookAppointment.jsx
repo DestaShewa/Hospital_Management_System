@@ -3,17 +3,19 @@
 import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
+import toast from "react-hot-toast"; // 1. Import the toast object
 
 const BookAppointment = () => {
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState("");
   const [appointmentDate, setAppointmentDate] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+
+  // We no longer need useState for error and success messages
+  // const [error, setError] = useState('');
+  // const [success, setSuccess] = useState('');
 
   const { userInfo } = useContext(AuthContext);
 
-  // Fetch all doctors to populate the dropdown
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
@@ -28,11 +30,10 @@ const BookAppointment = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
 
     if (!selectedDoctor || !appointmentDate) {
-      setError("Please select a doctor and a date.");
+      // 2. Replace alert with toast.error
+      toast.error("Please select a doctor and a date.");
       return;
     }
 
@@ -49,16 +50,20 @@ const BookAppointment = () => {
         { doctorId: selectedDoctor, appointmentDate },
         config
       );
-      setSuccess(
-        "Appointment booked successfully! You may need to refresh to see it in your list."
-      );
+
+      // 3. Replace alert with toast.success
+      toast.success("Appointment booked successfully!");
+
       // Clear the form
       setSelectedDoctor("");
       setAppointmentDate("");
+      // You may want to trigger a refresh of the appointments list here
     } catch (err) {
-      setError(
-        err.response ? err.response.data.message : "Failed to book appointment."
-      );
+      const message = err.response
+        ? err.response.data.message
+        : "Failed to book appointment.";
+      // 4. Replace alert with toast.error for API errors
+      toast.error(message);
     }
   };
 
@@ -94,7 +99,6 @@ const BookAppointment = () => {
             onChange={(e) => setAppointmentDate(e.target.value)}
             required
             className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
-            // Prevent selecting past dates
             min={new Date().toISOString().split("T")[0]}
           />
         </div>
@@ -104,8 +108,7 @@ const BookAppointment = () => {
         >
           Book Appointment
         </button>
-        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-        {success && <p className="text-green-500 text-sm mt-2">{success}</p>}
+        {/* 5. We can remove the old error/success message elements */}
       </form>
     </div>
   );

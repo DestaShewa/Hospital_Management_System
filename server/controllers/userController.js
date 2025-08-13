@@ -7,35 +7,21 @@ const generateToken = require("../utils/generateToken.js");
 // @route   POST /api/users/register
 // @access  Public
 const registerUser = async (req, res) => {
-  // 1. Get data from the request body
   const { name, email, password, role } = req.body;
-
   try {
-    // 2. Check if user already exists
     const userExists = await User.findOne({ email: email });
-
     if (userExists) {
-      res.status(400); // Bad Request
+      res.status(400);
       throw new Error("User already exists");
     }
-
-    // 3. Create a new user (the password will be hashed automatically by our pre-save hook)
-    const user = await User.create({
-      name,
-      email,
-      password,
-      role,
-    });
-
-    // 4. If user was created successfully, send back user data and a token
+    const user = await User.create({ name, email, password, role });
     if (user) {
       res.status(201).json({
-        // 201 = Created
         _id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
-        token: generateToken(user._id), // Generate a JWT for the user
+        token: generateToken(user._id),
       });
     } else {
       res.status(400);
@@ -51,12 +37,8 @@ const registerUser = async (req, res) => {
 // @access  Public
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
-
   try {
-    // 1. Find user by email
     const user = await User.findOne({ email });
-
-    // 2. If user exists and password matches, send back data and token
     if (user && (await user.matchPassword(password))) {
       res.json({
         _id: user._id,
@@ -66,7 +48,7 @@ const loginUser = async (req, res) => {
         token: generateToken(user._id),
       });
     } else {
-      res.status(401); // Unauthorized
+      res.status(401);
       throw new Error("Invalid email or password");
     }
   } catch (error) {
@@ -74,4 +56,33 @@ const loginUser = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser };
+// @desc    Get all users (for Admin)
+// @route   GET /api/users
+// @access  Private/Admin
+const getUsers = async (req, res) => {
+  const users = await User.find({});
+  res.json(users);
+};
+
+// --- NEW FUNCTION ADDED HERE ---
+// @desc    Get all users with the role of 'Patient'
+// @route   GET /api/users/patients
+// @access  Private (for logged-in staff like Doctors/Admins)
+const getPatientUsers = async (req, res) => {
+  try {
+    // Find all documents in the User collection where the role is 'Patient'
+    const patients = await User.find({ role: "Patient" });
+    res.json(patients);
+  } catch (error) {
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+// --- FINAL, UPDATED EXPORTS ---
+// Make sure all four functions are exported.
+module.exports = {
+  registerUser,
+  loginUser,
+  getUsers,
+  getPatientUsers, // <-- The new function is added here
+};

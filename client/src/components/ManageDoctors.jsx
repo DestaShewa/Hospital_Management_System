@@ -3,103 +3,98 @@
 import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
+import toast from "react-hot-toast"; // We should already have this from the last step
+import SkeletonLoader from "./SkeletonLoader"; // 1. Import the SkeletonLoader
 
 const ManageDoctors = () => {
-  // State for the list of doctors fetched from the backend
   const [doctors, setDoctors] = useState([]);
+  const [formState, setFormState] = useState({
+    userId: "",
+    name: "",
+    specialization: "",
+    qualifications: "",
+    experienceInYears: "",
+  });
 
-  // State for the form fields
-  const [userId, setUserId] = useState("");
-  const [name, setName] = useState("");
-  const [specialization, setSpecialization] = useState("");
-  const [qualifications, setQualifications] = useState("");
-  const [experienceInYears, setExperienceInYears] = useState("");
+  // We will use two separate loading states: one for the table and one for the form submission
+  const [isTableLoading, setIsTableLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // State for loading and error messages
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  // Get user info (for the token) from our global context
   const { userInfo } = useContext(AuthContext);
 
   // --- Function to fetch all doctors ---
   const fetchDoctors = async () => {
+    setIsTableLoading(true); // Start loading before the API call
     try {
-      setLoading(true);
-      // Make a GET request to our public endpoint to get all doctors
       const { data } = await axios.get("http://localhost:5000/api/doctors");
       setDoctors(data);
-      setLoading(false);
     } catch {
-      setError("Failed to fetch doctors.");
-      setLoading(false);
+      toast.error("Failed to fetch doctors.");
+    } finally {
+      setIsTableLoading(false); // Stop loading in both success and error cases
     }
   };
 
   // --- useEffect to fetch doctors when the component first loads ---
   useEffect(() => {
     fetchDoctors();
-  }, []); // The empty array ensures this runs only once on mount
+  }, []);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormState((prevState) => ({ ...prevState, [name]: value }));
+  };
 
   // --- Function to handle the form submission ---
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null); // Clear previous errors
+    setIsSubmitting(true);
 
-    // --- This is how we make a PROTECTED API request ---
-    // 1. Create a config object with the Authorization header
     const config = {
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${userInfo.token}`, // Get the token from our context
+        Authorization: `Bearer ${userInfo.token}`,
       },
     };
 
     try {
-      setLoading(true);
-      // 2. Make the POST request with the form data and the config object
-      await axios.post(
-        "http://localhost:5000/api/doctors",
-        { userId, name, specialization, qualifications, experienceInYears },
-        config
-      );
-      setLoading(false);
-      alert("Doctor profile created successfully!");
-
-      // Clear the form fields after successful submission
-      setUserId("");
-      setName("");
-      setSpecialization("");
-      setQualifications("");
-      setExperienceInYears("");
-
-      // Refresh the list of doctors to show the newly added one
-      fetchDoctors();
+      await axios.post("http://localhost:5000/api/doctors", formState, config);
+      toast.success("Doctor profile created successfully!");
+      setFormState({
+        userId: "",
+        name: "",
+        specialization: "",
+        qualifications: "",
+        experienceInYears: "",
+      });
+      fetchDoctors(); // Refresh the list of doctors
     } catch (err) {
-      setLoading(false);
-      // Display the specific error message from the backend
-      setError(
+      toast.error(
         err.response
           ? err.response.data.message
           : "Failed to create doctor profile."
       );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div className="p-4 bg-white rounded-lg shadow-md">
-      {/* --- FORM FOR ADDING A NEW DOCTOR --- */}
+      {/* --- FORM FOR ADDING A NEW DOCTOR (This part doesn't need a skeleton) --- */}
       <h3 className="text-xl font-semibold mb-4">Add New Doctor Profile</h3>
       <form onSubmit={handleSubmit} className="space-y-4 mb-8">
+        {/* ... form fields ... */}
+        {/* I've updated the form to use the 'formState' object for cleaner state management */}
         <div>
           <label className="block text-sm font-medium text-gray-700">
             Doctor's User ID*
           </label>
           <input
             type="text"
-            placeholder="Enter the User ID of a registered 'Doctor' user"
-            value={userId}
-            onChange={(e) => setUserId(e.target.value)}
+            name="userId"
+            value={formState.userId}
+            onChange={handleInputChange}
             required
             className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
           />
@@ -108,15 +103,15 @@ const ManageDoctors = () => {
             their User ID.
           </p>
         </div>
-        {/* Other input fields for name, specialization, etc. */}
         <div>
           <label className="block text-sm font-medium text-gray-700">
             Full Name
           </label>
           <input
             type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            name="name"
+            value={formState.name}
+            onChange={handleInputChange}
             required
             className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
           />
@@ -127,8 +122,9 @@ const ManageDoctors = () => {
           </label>
           <input
             type="text"
-            value={specialization}
-            onChange={(e) => setSpecialization(e.target.value)}
+            name="specialization"
+            value={formState.specialization}
+            onChange={handleInputChange}
             required
             className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
           />
@@ -139,8 +135,9 @@ const ManageDoctors = () => {
           </label>
           <input
             type="text"
-            value={qualifications}
-            onChange={(e) => setQualifications(e.target.value)}
+            name="qualifications"
+            value={formState.qualifications}
+            onChange={handleInputChange}
             required
             className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
           />
@@ -151,23 +148,23 @@ const ManageDoctors = () => {
           </label>
           <input
             type="number"
-            value={experienceInYears}
-            onChange={(e) => setExperienceInYears(e.target.value)}
+            name="experienceInYears"
+            value={formState.experienceInYears}
+            onChange={handleInputChange}
             required
             className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
           />
         </div>
         <button
           type="submit"
-          disabled={loading}
+          disabled={isSubmitting}
           className="px-4 py-2 font-bold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-gray-400"
         >
-          {loading ? "Creating..." : "Create Doctor Profile"}
+          {isSubmitting ? "Creating..." : "Create Doctor Profile"}
         </button>
-        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
       </form>
 
-      {/* --- TABLE TO DISPLAY EXISTING DOCTORS --- */}
+      {/* --- TABLE SECTION --- */}
       <h3 className="text-xl font-semibold mb-4">Existing Doctors</h3>
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white border">
@@ -180,7 +177,27 @@ const ManageDoctors = () => {
             </tr>
           </thead>
           <tbody>
-            {doctors.length > 0 ? (
+            {/* 2. Here is the conditional rendering logic */}
+            {isTableLoading ? (
+              // If loading, render skeleton rows
+              [1, 2, 3].map((n) => (
+                <tr key={n}>
+                  <td className="px-4 py-2 border">
+                    <SkeletonLoader className="h-5 w-full" />
+                  </td>
+                  <td className="px-4 py-2 border">
+                    <SkeletonLoader className="h-5 w-full" />
+                  </td>
+                  <td className="px-4 py-2 border">
+                    <SkeletonLoader className="h-5 w-full" />
+                  </td>
+                  <td className="px-4 py-2 border">
+                    <SkeletonLoader className="h-5 w-full" />
+                  </td>
+                </tr>
+              ))
+            ) : doctors.length > 0 ? (
+              // If not loading and doctors exist, render the actual data
               doctors.map((doctor) => (
                 <tr key={doctor._id}>
                   <td className="px-4 py-2 border">{doctor.name}</td>
@@ -192,6 +209,7 @@ const ManageDoctors = () => {
                 </tr>
               ))
             ) : (
+              // If not loading and there are no doctors
               <tr>
                 <td colSpan="4" className="text-center py-4">
                   No doctors found.

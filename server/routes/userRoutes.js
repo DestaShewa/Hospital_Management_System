@@ -2,14 +2,33 @@
 
 const express = require("express");
 const router = express.Router();
-const { registerUser, loginUser } = require("../controllers/userController.js");
 
-// Define the route for registering a user
-// When a POST request is made to '/register', call the 'registerUser' controller function
-router.post("/register", registerUser);
+// Import all four functions from the controller
+const {
+  registerUser,
+  loginUser,
+  getUsers,
+  getPatientUsers, // <-- Import the new function
+} = require("../controllers/userController.js");
 
-// Define the route for logging in a user
-// When a POST request is made to '/login', call the 'loginUser' controller function
+// Import the necessary middleware
+const { protect, admin } = require("../middleware/authMiddleware.js");
+
+// --- ALL USER ROUTES ---
+
+// Route for registering a new user (Public)
+router.route("/register").post(registerUser);
+
+// Route for getting a list of all users (Admin only)
+router.route("/").get(protect, admin, getUsers);
+
+// Route for logging in a user (Public)
 router.post("/login", loginUser);
 
+// --- NEW ROUTE ADDED HERE ---
+// Route for getting a list of only patient users (for Doctors, etc.)
+// It is protected, so only logged-in users can access it.
+router.route("/patients").get(protect, getPatientUsers);
+
+// Make sure to export the router
 module.exports = router;
